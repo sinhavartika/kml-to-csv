@@ -20,40 +20,40 @@
 			<div class="row">
 				<div class="col-md-4">
 					<h5 class="text-center">Step 1 : KML</h5>
-					<p>
+					<p class="text-justify">
 						Enter the kml in the textarea. Make sure that the kml has photo overlay or placemark overlay.	
 					</p>
 					<textarea class="form-control" rows="25" id="input-kml">
 						Input kml goes here
 					</textarea>		
-					<p>
+					<p class="text-justify">
 						Click on convert blue button to convert kml into JSON. This JSON is visible in next text area.
 					</p>
 					<button class="btn btn-block btn-primary" onclick="kml2json()">convert</button>
 				</div>
 				<div class="col-md-4">
 					<h5 class="text-center">Step 2 : KML data as JSON</h5>
-					<p>
+					<p class="text-justify">
 						This is your kml in JSON format. Now this is ready to be cleaned and extracted to get <strong>name</strong>, <strong>longitude</strong> and <strong>latitude</strong>.
 						You can review the JSON if you want.
 					</p>
 					<textarea class="form-control" rows="25" id="input-json">
 						Input json goes here
 					</textarea>	
-					<p>
+					<p class="text-justify">
 						Click on clean button to get final clean JSON.
 					</p>					
 					<button class="btn btn-block btn-primary" onclick="clean()">clean</button>
 				</div>
 				<div class="col-md-4">
 					<h5 class="text-center">Step 2 : clean JSON</h5>
-					<p>
+					<p class="text-justify">
 						Review the Clean JSON. This JSON will be converted into csv.
 					</p>
 					<textarea class="form-control" rows="25" id="output-json">
 						Output json
 					</textarea>
-					<p>
+					<p class="text-justify">
 						Click to download csv. 
 					</p>					
 					<button class="btn btn-block btn-primary" onclick="downloadCsv()">downlaod csv</button>
