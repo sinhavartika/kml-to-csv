@@ -1,0 +1,212 @@
+<html>
+	<head>
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+		<style>
+			#dropzone {
+			  border: 1px solid blue;
+			  width: 300px;
+			  height: 300px;
+			}
+		</style>
+	</head>
+	<body>
+		<img style="visibility: hidden;" id="geo-image"/>
+		<div class="container well">
+			<div class="row">
+				<div class="col-md-4">
+					<textarea class="form-control" rows="25" id="input-kml">
+						Input kml goes here
+					</textarea>		
+					<button class="btn btn-block btn-primary" onclick="kml2json()">convert</button>
+				</div>
+				<div class="col-md-4">
+					<textarea class="form-control" rows="25" id="input-json">
+						Input json goes here
+					</textarea>		
+					<button class="btn btn-block btn-primary" onclick="clean()">clean</button>
+				</div>
+				<div class="col-md-4">
+					<textarea class="form-control" rows="25" id="output-json">
+						Output json
+					</textarea>
+					<button class="btn btn-block btn-primary" onclick="downloadCsv()">downlaod csv</button>
+				</div>
+			</div>
+		</div>
+		
+		<!-- xml to json -->
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/x2js/1.2.0/xml2json.js"></script>
+		<!-- json to csv -->
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.8.7/xlsx.js"></script>
+		<!-- save csv -->
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.js"></script>
+		<!-- scripts to convert-->
+		<script type="text/javascript">
+			// initialize the xml to json coverter
+			var x2js = new X2JS();
+
+			// covert kml to json using xml to json json coverter
+			function kml2json(){
+				var input = document.getElementById('input-kml').value;
+				var outputJSON = x2js.xml_str2json(input);
+				if(!outputJSON || (outputJSON && !outputJSON.kml)){
+					document.getElementById('input-json').value = "No KML file";	
+					return;
+				}
+				document.getElementById('input-json').value = JSON.stringify(outputJSON, null, 2);
+			}
+
+			// get rid of all camera and google earth placemerks
+			function clean(){
+				var input = document.getElementById('input-json').value;
+
+				if(!input){
+					document.getElementById('output-json').value = "Not a valid JSON";	
+					return;
+				}
+
+				try{
+					JSON.parse(input)
+				}catch(e){
+					document.getElementById('output-json').value = "Not a valid JSON";	
+					return;
+				}
+
+				input = JSON.parse(input);
+				var photoPoints = [];
+				var markPoints = [];
+
+				if(input.kml.Document && input.kml.Document.PhotoOverlay){
+					var photoOverlay = input.kml.Document.PhotoOverlay;
+					photoPoints = photoOverlay.map(function(photo){
+						var point = {};
+						point.name = photo.name;
+						point.longitude = photo.Camera.longitude;
+						point.latitude = photo.Camera.latitude;
+						return point;
+					});
+				}
+
+				if(input.kml.Document && input.kml.Document.Placemark){
+					var placemarks = input.kml.Document.Placemark;
+					markPoints = placemarks.map(function(place){
+						var point = {};
+						point.name = place.name;
+						point.longitude = place.LookAt.longitude;
+						point.latitude = place.LookAt.latitude;
+						return point;
+					});
+				}
+
+				var points = markPoints.concat(photoPoints);
+				if(points.length){
+					document.getElementById('output-json').value = JSON.stringify(points, null, 2);	
+				}else{
+					document.getElementById('output-json').value = "The kml must contain kml.Document.PhotoOverlay or kml.Document.Placemark";	
+				}
+			}
+
+			// step 3 download the csv
+			function downloadCsv(){
+
+				// get cleaned json and convert it in to csv which can be downloaded.
+				var input = document.getElementById('output-json').value;
+				input = JSON.parse(input);
+
+				// get the field names 
+				var feature = input[0];
+				var fieldKeys = Object.keys(feature);
+
+				// push the header into the csv. This csv is a multi dimentional array. Each row with the header is an array.
+				var csv = [];
+				csv.push(fieldKeys);
+
+				for(var i = 0; i < input.length; i++){
+					var point = input[i];
+					var row = [];
+					row.push(point.name);
+					row.push(point.latitude);
+					row.push(point.longitude);
+					csv.push(row);
+				}
+
+				csv = _jsonToXlsx(csv);
+
+				// send the complied csv array to the lib to be downloaded as a csv file.
+				/* bookType can be 'xlsx' or 'xlsm' or 'xlsb' or 'ods' */
+				var wopts = { bookType:'csv', bookSST:false, type:'binary' };
+				var wbout = XLSX.write(csv,wopts);
+
+				function s2ab(s){
+				  var buf = new ArrayBuffer(s.length);
+				  var view = new Uint8Array(buf);
+				  for (var i=0; i!=s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+				  return buf;
+				}
+
+				/* the saveAs call downloads a file on the local machine */
+				saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), "result.csv");
+			}
+
+			// xlsxjs needs data in some format .. creating that format.
+			function _jsonToXlsx(data, options){
+				var defaults = {
+					start: {
+						cell : 0,
+						row : 0
+					}
+				};
+				var options = options || defaults;
+
+				var ws_name = "sheet";
+
+				/* set up workbook objects -- some of these will not be required in the future */
+				var wb = {}
+				wb.Sheets = {};
+				wb.Props = {};
+				wb.SSF = {};
+				wb.SheetNames = [];
+
+				/* create worksheet: */
+				var ws = {};
+
+				/* the range object is used to keep track of the range of the sheet */
+				var range = {s: {c:options.start.cell, r:options.start.row}, e: {c:0, r:0 }};
+
+				/* Iterate through each element in the structure */
+				for(var R = 0; R != data.length; ++R) {
+				  if(range.e.r < R) range.e.r = R;
+				  for(var C = 0; C != data[R].length; ++C) {
+				    if(range.e.c < C) range.e.c = C;
+
+				    /* create cell object: .v is the actual data */
+				    var cell = { v: data[R][C] };
+				    if(cell.v == null) continue;
+
+				    /* create the correct cell reference */
+				    var cell_ref = XLSX.utils.encode_cell({c:C,r:R});
+
+				    /* determine the cell type */
+				    if(typeof cell.v === 'number') cell.t = 'n';
+				    else if(typeof cell.v === 'boolean') cell.t = 'b';
+				    else cell.t = 's';
+
+				    /* add to structure */
+				    ws[cell_ref] = cell;
+				  }
+				}
+				ws['!ref'] = XLSX.utils.encode_range(range);
+
+				/* add worksheet to workbook */
+				wb.SheetNames.push(ws_name);
+				wb.Sheets[ws_name] = ws;
+				return wb;
+			}
+		</script>
+	</body>
+</html>
