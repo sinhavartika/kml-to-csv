@@ -54,7 +54,34 @@
 				</div>
 			</div>
 		</div>
-		
+		<div class="well container">
+			<h4>Convert CSV to Shape</h4>
+			<ol start="number">
+				<li>
+					Create a vrt file by following instructions on <a href="vrtbuilder.appspot.com">this</a> site.
+				</li>
+				<li>
+					Download vrt and save it in parallel to the csv file because, the resulting vrt will have tag 
+					<pre><SrcDataSource relativeToVRT="1">example.csv</SrcDataSource></pre>.
+				</li>
+				<li>
+					<pre>ogr2ogr -f "ESRI Shapefile" example.shp example.vrt</pre>
+					Using this command create shapefile.
+				</li>
+				<li>
+					If you pay close attention the projection of the shapefile is <a href="http://spatialreference.org/ref/epsg/wgs-84/">EPSG:4326</a>
+					So, while rasterizing this file you will have to convert it into a projection suitable to the raster.
+				</li>
+			</ol>
+		</div>
+		<div class="well container">
+			<h4>References</h4>
+			<ol start="number">
+				<li>
+					<a href="http://gis.stackexchange.com/questions/327/how-can-i-convert-an-excel-file-with-x-y-columns-to-a-shapefile">how-can-i-convert-an-excel-file-with-x-y-columns-to-a-shapefile</a>
+				</li>
+			</ol>
+		</div>
 		<!-- xml to json -->
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/x2js/1.2.0/xml2json.js"></script>
 		<!-- json to csv -->
