@@ -35,14 +35,20 @@
 						This is your kml in JSON format. Now this is ready to be cleaned and extracted to get <strong>name</strong>, <strong>longitude</strong> and <strong>latitude</strong>.
 						You can review the JSON if you want.
 					</p>
-					<textarea class="form-control" rows="25" id="input-json">Input json goes here</textarea>	
+					<textarea class="form-control" rows="12" id="input-json">Input json goes here</textarea>	
+					
+					<h5 class="text-center">Step 2 : KML data as JSON</h5>
+					<p class="text-justify">
+						lorem ipsum
+					</p>
+					<textarea class="form-control" rows="12" id="classes-input-json">Input json goes here</textarea>	
 					<p class="text-justify">
 						Click on clean button to get final clean JSON.
 					</p>					
 					<button class="btn btn-block btn-primary" onclick="clean()">clean</button>
 				</div>
 				<div class="col-md-4">
-					<h5 class="text-center">Step 2 : clean JSON</h5>
+					<h5 class="text-center">Step 3 : clean JSON</h5>
 					<p class="text-justify">
 						Review the Clean JSON. This JSON will be converted into csv.
 					</p>
@@ -58,7 +64,7 @@
 			<h4>Convert CSV to Shape</h4>
 			<ol start="number">
 				<li>
-					Create a vrt file by following instructions on <a href="vrtbuilder.appspot.com">this</a> site.
+					Create a vrt file by following instructions on <a href="https://vrtbuilder.appspot.com">this</a> site.
 				</li>
 				<li>
 					Download vrt and save it in parallel to the csv file because, the resulting vrt will have tag 
@@ -107,20 +113,24 @@
 			// get rid of all camera and google earth placemerks
 			function clean(){
 				var input = document.getElementById('input-json').value;
-
-				if(!input){
+				var classes = document.getElementById('classes-input-json').value;
+				if(!input || !classes){
 					document.getElementById('output-json').value = "Not a valid JSON";	
+					document.getElementById('classes-input-json').value = "Not a valid JSON";	
 					return;
 				}
 
 				try{
 					JSON.parse(input)
+					JSON.parse(classes)
 				}catch(e){
 					document.getElementById('output-json').value = "Not a valid JSON";	
+					document.getElementById('classes-input-json').value = "Not a valid JSON";	
 					return;
 				}
 
 				input = JSON.parse(input);
+				classes = JSON.parse(classes);
 				var photoPoints = [];
 				var markPoints = [];
 
@@ -147,8 +157,9 @@
 				}
 
 				var points = markPoints.concat(photoPoints);
-				if(points.length){
-					document.getElementById('output-json').value = JSON.stringify(points, null, 2);	
+				var cleanPoints = clean_classes(points,classes);
+				if(cleanPoints.length){
+					document.getElementById('output-json').value = JSON.stringify(cleanPoints, null, 2);	
 				}else{
 					document.getElementById('output-json').value = "The kml must contain kml.Document.PhotoOverlay or kml.Document.Placemark";	
 				}
@@ -173,8 +184,12 @@
 					var point = input[i];
 					var row = [];
 					row.push(point.name);
-					row.push(point.latitude);
 					row.push(point.longitude);
+					row.push(point.latitude);
+					row.push(point.filename);
+					row.push(point.classname);
+					row.push(point.roundedlongitude);
+					row.push(point.roundedlatitude);
 					csv.push(row);
 				}
 
@@ -196,6 +211,30 @@
 				saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), "result.csv");
 			}
 
+			function clean_classes(points,classes){
+				var final_points = [];
+				var coords = [];
+				for(var i = 0, j = 0; i < points.length; i++){
+					var point = points[i];
+					point.filename = point.name;
+					point.classname = "";
+					point.roundedlongitude = Math.round(parseFloat(point.longitude) * 1000) / 1000; 
+					point.roundedlatitude = Math.round(parseFloat(point.latitude) * 1000) / 1000 ;		
+					var coord = point.longitude + "" + point.latitude + "";
+					if(coords.indexOf(coord) === -1){
+						for(var lc_class in classes){
+							if(point.filename.indexOf(lc_class) > -1){
+								point.classname = classes[lc_class];
+								coords.push(coord);
+								final_points.push(point);
+								break;
+							}
+						}
+					}
+				}
+				return final_points;
+			}
+			
 			// xlsxjs needs data in some format .. creating that format.
 			function _jsonToXlsx(data, options){
 				var defaults = {
