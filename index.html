@@ -192,6 +192,7 @@
 					// get the field names
 					var points = files[file].points;
 					var feature = points[0];
+					if(!feature) continue;
 					var fieldKeys = Object.keys(feature);
 
 					// push the header into the csv. This csv is a multi dimentional array. Each row with the header is an array.
@@ -245,8 +246,8 @@
 					var point = points[i];
 					point.filename = point.name;
 					point.classname = "";
-					point.roundedlongitude = Math.round(parseFloat(point.longitude) * 10) / 10; 
-					point.roundedlatitude = Math.round(parseFloat(point.latitude) * 10) / 10;		
+					point.roundedlongitude = Math.round(parseFloat(point.longitude) * 1000) / 1000; 
+					point.roundedlatitude = Math.round(parseFloat(point.latitude) * 1000) / 1000;		
 					var coord = point.longitude + "" + point.latitude + "";
 					if(coords.indexOf(coord) === -1){
 						for(var lc_class in classes){
