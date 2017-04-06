@@ -159,8 +159,8 @@
 					markPoints = placemarks.map(function(place){
 						var point = {};
 						point.name = place.name;
-						point.longitude = place.LookAt.longitude;
-						point.latitude = place.LookAt.latitude;
+						point.longitude = place.LookAt.longitude || place.Camera.longitude;
+						point.latitude = place.LookAt.latitude || place.Camera.latitude;
 						console.log(point);
 						return point;
 					});
