@@ -251,7 +251,8 @@
 					point.roundedlongitude = Math.round(parseFloat(point.longitude) * 1000) / 1000; 
 					point.roundedlatitude = Math.round(parseFloat(point.latitude) * 1000) / 1000;		
 					var coord = point.longitude + "" + point.latitude + "";
-					if(coords.indexOf(coord) === -1){
+					//coords.indexOf(coord) === -1
+					if(true){
 						for(var lc_class in classes){
 							if(point.filename.indexOf(lc_class) > -1){
 								point.classname = classes[lc_class];
